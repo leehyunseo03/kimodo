@@ -91,6 +91,13 @@ def display_path(path: Path) -> str:
         return str(path)
 
 
+def container_workspace_path(path: Path) -> str:
+    try:
+        return f"/workspace/{path.relative_to(ISAACLAB_WS)}"
+    except ValueError:
+        return str(path)
+
+
 def yaw_to_quat_wxyz(yaw: float) -> np.ndarray:
     quat_xyzw = Rotation.from_euler("z", yaw).as_quat()
     return quat_xyzw[[3, 0, 1, 2]].astype(np.float32)
@@ -114,6 +121,7 @@ def make_target_qpos(forward_meters: float, target_height: float, yaw: float = 0
     qpos = np.zeros(36, dtype=np.float32)
     qpos[:3] = [forward_meters, 0.0, target_height]
     qpos[3:7] = yaw_to_quat_wxyz(yaw)
+    """
     qpos[7:36] = np.asarray(
         [
             0.0,   # left_hip_pitch
@@ -148,6 +156,7 @@ def make_target_qpos(forward_meters: float, target_height: float, yaw: float = 0
         ],
         dtype=np.float32,
     )
+    """
     return qpos
 
 
@@ -413,7 +422,7 @@ def export_outputs(args: argparse.Namespace, qpos: np.ndarray, target_qpos: np.n
             "trajectory_markers_xml": display_path(markers_xml),
             "marker_stride": args.marker_stride,
         },
-        "gearsonic_motion_file": f"/workspace/GR00T-WholeBodyControl/{robot_pkl.relative_to(GROOT_ROOT)}",
+        "gearsonic_motion_file": container_workspace_path(robot_pkl),
         "smpl_motion_file": "dummy",
         "viewer_command": (
             "LIVESTREAM=2 /workspace/isaaclab/isaaclab.sh -p "
@@ -435,7 +444,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--qpos_key", type=str, default="qpos")
     parser.add_argument("--output_dir", type=str, default=str(GROOT_ROOT / "kimodo_sonic" / "motion"))
     parser.add_argument("--motion_name", type=str, default="kimodo_to_target_forward_5m_hand_raise")
-    parser.add_argument("--forward_meters", type=float, default=5.0)
+    parser.add_argument("--forward_meters", type=float, default=3.0)
     parser.add_argument("--forward_target_name", type=str, default="forward_5m_hand_raise_target")
     parser.add_argument("--target_height", type=float, default=0.78)
     parser.add_argument("--duration", type=float, default=6.0)
